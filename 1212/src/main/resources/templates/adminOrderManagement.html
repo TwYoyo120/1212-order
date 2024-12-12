@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>訂單管理</title>
+
+    <!-- import Bootstrap CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <script src="/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+    <!-- 導航欄 -->
+    <header class="p-3 bg-dark text-white">
+        <div class="container-fluid">
+            <div class="d-flex flex-wrap align-items-center justify-content-between">
+                <!-- 管理操作選單 -->
+                <ul class="nav me-auto">
+                    <li><a href="/" class="btn btn-warning text-black">CHKWGameStop</a></li>
+                    <li><a href="/saInfo" class="nav-link px-2 text-white">管理員資料總覽</a></li>
+                    <li><a href="/userInfo" class="nav-link px-2 text-white">會員資料總覽</a></li>
+                    <li><a href="/item/itemList" class="nav-link px-2 text-white">商品總覽</a></li>
+                    <li><a href="/" class="nav-link px-2 text-white">文章總覽</a></li>
+                    <li><a href="/orders/order-management" class="nav-link px-2 text-white">訂單總覽</a></li>
+                    <li><a href="/shipping/shipping-tracking" class="nav-link px-2 text-white">物流追蹤</a></li>
+                    <li><a href="/review/reviewManagement" class="nav-link px-2 text-white">評論總覽</a></li>
+                    <li><a href="/" class="nav-link px-2 text-white">客服表單總覽</a></li>
+                    <li><a href="/" class="nav-link px-2 text-white">FAQ文章總覽</a></li>
+                    <li><a href="/adInfo" class="nav-link px-2 text-white">廣告總覽</a></li>
+                    <li><a href="/" class="nav-link px-2 text-white">商品樣式總覽</a></li>
+                    <li><a href="/" class="nav-link px-2 text-white">商品品牌總覽</a></li>
+                </ul>
+
+                <!-- 登出按鈕 -->
+                <div class="text-end">
+                    <button type="button" class="btn btn-outline-light me-2">登出</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主內容 -->
+    <div class="container mt-4">
+        <h1 class="page-title">訂單管理</h1>
+
+        <!-- 搜尋表單 -->
+        <form id="searchForm" class="mb-3">
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="buyerIdFilter" class="form-label">買家 ID</label>
+                    <input type="number" id="buyerIdFilter" class="form-control" placeholder="輸入買家 ID">
+                </div>
+                <div class="col-md-3">
+                    <label for="sellerIdFilter" class="form-label">賣家 ID</label>
+                    <input type="number" id="sellerIdFilter" class="form-control" placeholder="輸入賣家 ID">
+                </div>
+                <div class="col-md-3">
+                    <label for="orderNumberFilter" class="form-label">訂單編號</label>
+                    <input type="text" id="orderNumberFilter" class="form-control" placeholder="輸入訂單編號">
+                </div>
+                <div class="col-md-3">
+                    <label for="statusFilter" class="form-label">訂單狀態</label>
+                    <select id="statusFilter" class="form-select">
+                       <option value="">全部</option>
+   					   <option value="待付款">待付款</option>
+    				   <option value="已付款">已付款</option>
+    				   <option value="待出貨">待出貨</option>
+    				   <option value="已出貨">已出貨</option>
+    				   <option value="待收貨">待收貨</option>
+    			       <option value="已完成">已完成</option>
+    				   <option value="取消">取消</option>
+    				   <option value="退貨/退款">退貨/退款</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mt-3">
+                    <label for="startDateFilter" class="form-label">開始日期</label>
+                    <input type="date" id="startDateFilter" class="form-control">
+                </div>
+                <div class="col-md-3 mt-3">
+                    <label for="endDateFilter" class="form-label">結束日期</label>
+                    <input type="date" id="endDateFilter" class="form-control">
+                </div>
+            </div>
+        </form>
+
+        <!-- 訂單表格 -->
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>訂單編號</th>
+                    <th>買家ID</th>
+                    <th>總金額</th>
+                    <th>付款情型</th>
+                    <th>物流情型</th>
+                    <th>訂單狀態</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="orderTable"></tbody>
+        </table>
+
+        <!-- 分頁導航 -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination" id="pagination"></ul>
+        </nav>
+    </div>
+
+    <!-- 訂單詳情模態框 -->
+    <div class="modal fade" id="orderDetailModal" tabindex="-1" aria-labelledby="orderDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">訂單詳情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">訂單編號</label>
+                        <input type="text" id="modalOrderNumber" class="form-control" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">下單時間</label>
+                        <input type="text" id="modalOrderDate" class="form-control" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">買家 ID</label>
+                        <input type="number" id="modalBuyerId" class="form-control" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">商品列表</label>
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>賣家ID</th>
+                                    <th>商品ID</th>
+                                    <th>商品名稱</th>
+                                    <th>數量</th>
+                                    <th>金額</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modalItemsTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modalOrderStatus" class="form-label">訂單狀態</label>
+                        <select id="modalOrderStatus" class="form-select">
+                            <option value="Pending">待處理</option>
+                            <option value="In Progress">處理中</option>
+                            <option value="Shipped">已發貨</option>
+                            <option value="Delivered">已送達</option>
+                            <option value="Canceled">已取消</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modalPaymentStatus" class="form-label">付款情型</label>
+                        <select id="modalPaymentStatus" class="form-select">
+                            <option value="Paid">已付款</option>
+                            <option value="Unpaid">未付款</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modalShippingStatus" class="form-label">物流情型</label>
+                        <select id="modalShippingStatus" class="form-select">
+                            <option value="Not Shipped">未出貨</option>
+                            <option value="Shipping">運送中</option>
+                            <option value="Delivered">已送達</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+                    <button type="button" class="btn btn-primary" id="saveChangesButton">保存更改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const statusTranslation = {
+                paymentStatus: { "Unpaid": "未付款", "Paid": "已付款" },
+                shippingStatus: { "Not Shipped": "未出貨", "Shipping": "運送中", "Delivered": "已送達" },
+                orderStatus: { "Pending": "待處理", "In Progress": "處理中", "Shipped": "已發貨", "Delivered": "已送達", "Canceled": "已取消" }
+            };
+
+            let originalStatus = null; // 用來記錄訂單初始狀態
+
+            const disableModalFields = (disabled) => {
+                // 狀態欄位永遠可變更
+                document.getElementById("modalOrderStatus").disabled = false;
+
+                // 根據 disabled 決定其他欄位與按鈕
+                document.getElementById("modalPaymentStatus").disabled = disabled;
+                document.getElementById("modalShippingStatus").disabled = disabled;
+                document.getElementById("saveChangesButton").disabled = disabled;
+            };
+
+            window.loadOrders = (page = 1) => {
+                const filters = {
+                    buyerId: document.getElementById("buyerIdFilter").value,
+                    sellerId: document.getElementById("sellerIdFilter").value,
+                    orderNumber: document.getElementById("orderNumberFilter").value,
+                    status: document.getElementById("statusFilter").value,
+                    startDate: document.getElementById("startDateFilter").value,
+                    endDate: document.getElementById("endDateFilter").value
+                };
+                const params = new URLSearchParams({ page, size: 10, ...filters });
+
+                fetch(`/orders?${params.toString()}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const orderTable = document.getElementById("orderTable");
+                        orderTable.innerHTML = "";
+
+                        data.content.forEach(order => {
+                            const row = document.createElement("tr");
+                            row.style.backgroundColor = order.status === "Delivered" ? "#FFFFE0" :
+                                                        order.status === "Canceled" ? "#F8D7DA" : "";
+
+                            row.innerHTML = `
+                                <td>${order.orderNumber}</td>
+                                <td>${order.buyerId}</td>
+                                <td>${order.total}</td>
+                                <td>${statusTranslation.paymentStatus[order.paymentStatus]}</td>
+                                <td>${statusTranslation.shippingStatus[order.shippingStatus]}</td>
+                                <td>${statusTranslation.orderStatus[order.status]}</td>
+                                <td><button class="btn btn-primary btn-sm" onclick="viewOrder('${order.orderNumber}')">詳情</button></td>
+                            `;
+                            orderTable.appendChild(row);
+                        });
+
+                        updatePagination(data.totalPages, data.currentPage);
+                    });
+            };
+
+            const updatePagination = (totalPages, currentPage) => {
+                const pagination = document.getElementById("pagination");
+                pagination.innerHTML = "";
+
+                for (let i = 1; i <= totalPages; i++) {
+                    const li = document.createElement("li");
+                    li.className = `page-item ${i === currentPage ? "active" : ""}`;
+                    li.innerHTML = `<a class="page-link" href="#" onclick="loadOrders(${i}); return false;">${i}</a>`;
+                    pagination.appendChild(li);
+                }
+            };
+
+            window.viewOrder = (orderNumber) => {
+                fetch(`/orders/${orderNumber}`)
+                    .then(response => response.json())
+                    .then(order => {
+                        document.getElementById("modalOrderNumber").value = order.orderNumber;
+                        document.getElementById("modalOrderDate").value = order.orderDate;
+                        document.getElementById("modalBuyerId").value = order.buyerId;
+
+                        const modalItemsTableBody = document.getElementById("modalItemsTableBody");
+                        modalItemsTableBody.innerHTML = "";
+                        order.items.forEach(item => {
+                            const row = document.createElement("tr");
+                            row.innerHTML = `
+                                <td>${item.sellerId}</td>
+                                <td>${item.itemId}</td>
+                                <td>${item.itemName}</td>
+                                <td>${item.quantity}</td>
+                                <td>${item.price * item.quantity}</td>
+                            `;
+                            modalItemsTableBody.appendChild(row);
+                        });
+
+                        // 記錄訂單原始狀態
+                        originalStatus = order.status;
+
+                        document.getElementById("modalOrderStatus").value = order.status;
+                        document.getElementById("modalPaymentStatus").value = order.paymentStatus;
+                        document.getElementById("modalShippingStatus").value = order.shippingStatus;
+
+                        // 初次開啟視窗時依照目前狀態決定是否禁用
+                        // 若原始狀態為Canceled，則一開始先鎖定，否則開放編輯
+                        disableModalFields(order.status === "Canceled");
+
+                        // 狀態變更後不即刻鎖定，以保存為準
+                        const modalOrderStatusSelect = document.getElementById("modalOrderStatus");
+                        modalOrderStatusSelect.removeEventListener('change', handleStatusChange); 
+                        modalOrderStatusSelect.addEventListener('change', handleStatusChange);
+
+                        new bootstrap.Modal(document.getElementById("orderDetailModal")).show();
+                    });
+            };
+
+            function handleStatusChange() {
+                // 狀態改變後，不論選擇什麼狀態，都不立即鎖定欄位
+                // 因為需求是要等到保存後才生效
+                disableModalFields(false);
+            }
+
+            document.getElementById("saveChangesButton").addEventListener("click", () => {
+                const updatedFields = {
+                    status: document.getElementById("modalOrderStatus").value,
+                    paymentStatus: document.getElementById("modalPaymentStatus").value,
+                    shippingStatus: document.getElementById("modalShippingStatus").value
+                };
+
+                const currentOrderNumber = document.getElementById("modalOrderNumber").value;
+
+                fetch(`/orders/${currentOrderNumber}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(updatedFields)
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            alert("保存成功！");
+                            loadOrders();
+                            // 保存成功後依最終狀態鎖定
+                            if (updatedFields.status === "Canceled") {
+                                disableModalFields(true);
+                            } else {
+                                disableModalFields(false);
+                            }
+
+                            // 更新原始狀態為新存檔狀態
+                            originalStatus = updatedFields.status;
+                        } else {
+                            alert("保存失敗，請稍後再試。");
+                        }
+                    });
+            });
+
+            // 即時查詢事件綁定
+            document.querySelectorAll("#searchForm input, #searchForm select").forEach(el => {
+                el.addEventListener("input", () => loadOrders());
+                el.addEventListener("change", () => loadOrders());
+            });
+
+            loadOrders();
+        });
+    </script>
+
+</body>
+</html>

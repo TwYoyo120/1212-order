@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>物流追蹤</title>
+    
+    <!-- import Bootstrap CSS -->
+    <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/css/custom.css}" rel="stylesheet">
+    <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+    <script th:src="@{/js/jquery.min.js}"></script>
+</head>
+<body>
+    <!-- 導航欄 -->
+    <header class="p-3 bg-dark text-white">
+        <div class="container-fluid">
+            <div class="d-flex flex-wrap align-items-center justify-content-between">
+            
+                <!-- 管理操作選單 -->
+                <ul class="nav me-auto">
+                    <li><a th:href="@{/}" class="btn btn-warning text-black">CHKWGameStop</a></li>
+                    <li><a th:href="@{/saInfo}" class="nav-link px-2 text-white">管理員資料總覽</a></li>
+                    <li><a th:href="@{/userInfo}" class="nav-link px-2 text-white">會員資料總覽</a></li>
+                    <li><a th:href="@{/item/itemList}" class="nav-link px-2 text-white">商品總覽</a></li>
+                    <li><a th:href="@{/}" class="nav-link px-2 text-white">文章總覽</a></li>
+                    <li><a th:href="@{/orders/order-management}" class="nav-link px-2 text-white">訂單總覽</a></li>
+                    <li><a th:href="@{/shipping/shipping-tracking}" class="nav-link px-2 text-white">物流追蹤</a></li>
+                    <li><a th:href="@{/review/reviewManagement}" class="nav-link px-2 text-white">評論總覽</a></li>
+                    <li><a th:href="@{/}" class="nav-link px-2 text-white">客服表單總覽</a></li>
+                    <li><a th:href="@{/}" class="nav-link px-2 text-white">FAQ文章總覽</a></li>
+                    <li><a th:href="@{/adInfo}" class="nav-link px-2 text-white">廣告總覽</a></li>
+                    <li><a th:href="@{/}" class="nav-link px-2 text-white">商品樣式總覽</a></li>
+                    <li><a th:href="@{/}" class="nav-link px-2 text-white">商品品牌總覽</a></li>
+                </ul>
+
+                <!-- 登出按鈕 -->
+                <div class="text-end">
+                    <button type="button" class="btn btn-outline-light me-2">登出</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主內容 -->
+    <div class="main-content">
+        <h1 class="page-title">物流追蹤</h1>
+        <style>
+ 		 	.page-title {
+    		text-align: center; /* 水平置中 */
+    		margin-top: 20px;  /* 與上方內容保持距離 */
+  			}
+		</style>
+        <!-- 搜索表單 -->
+        <div class="container mb-4">
+            <form id="searchForm" class="row g-3">
+                <div class="col-md-4">
+                    <label for="orderIdInput" class="form-label">訂單ID</label>
+                    <input type="text" id="orderIdInput" class="form-control" placeholder="輸入訂單ID">
+                </div>
+                <div class="col-md-4">
+                    <label for="statusSelect" class="form-label">物流狀態</label>
+                    <select id="statusSelect" class="form-select">
+                        <option value="">選擇狀態</option>
+                        <option value="Pending">待處理</option>
+                        <option value="In Transit">運輸中</option>
+                        <option value="Delivered">已送達</option>
+                        <option value="Returned">退貨</option>
+                        <option value="Canceled">取消</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="button" class="btn btn-primary" onclick="searchShippingInfo()">查詢</button>
+                    <button type="button" class="btn btn-secondary ms-2" onclick="resetSearchForm()">重置</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 物流信息表格 -->
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>訂單ID</th>
+                    <th>收件人</th>
+                    <th>地址</th>
+                    <th>物流狀態</th>
+                    <th>追蹤號</th>
+                    <th>物流單號圖片</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="shippingTableBody">
+                <!-- 動態數據插入 -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 編輯物流信息模態框 -->
+    <div class="modal fade" id="shippingInfoModal" tabindex="-1" aria-labelledby="shippingInfoModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form id="shippingInfoForm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="shippingInfoModalLabel">編輯物流信息</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- 表單內容 -->
+                        <div class="mb-3">
+                            <label for="modalRecipient" class="form-label">收件人</label>
+                            <input type="text" id="modalRecipient" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label for="modalAddress" class="form-label">地址</label>
+                            <input type="text" id="modalAddress" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label for="modalStatus" class="form-label">物流狀態</label>
+                            <select id="modalStatus" class="form-select">
+                                <option value="Pending">待處理</option>
+                                <option value="In Transit">運輸中</option>
+                                <option value="Delivered">已送達</option>
+                                <option value="Returned">退貨</option>
+                                <option value="Canceled">取消</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="modalImageFile" class="form-label">上傳物流單號圖片</label>
+                            <input type="file" id="modalImageFile" class="form-control" accept="image/*">
+                            <img id="modalImagePreview" src="" alt="預覽" style="max-width: 100%; margin-top: 10px; display: none;">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <!-- 按鈕 -->
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+                        <button type="submit" class="btn btn-primary">保存更改</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript 部分 -->
+    <script>
+        const statusMap = {
+            "Pending": "待處理",
+            "In Transit": "運輸中",
+            "Delivered": "已送達",
+            "Returned": "退貨",
+            "Canceled": "取消",
+        };
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const shippingTableBody = document.getElementById("shippingTableBody");
+
+            function loadShippingInfo() {
+                fetch("/shipping")
+                    .then(response => response.json())
+                    .then(data => {
+                        shippingTableBody.innerHTML = "";
+                        data.forEach(item => {
+                            const { order, shippingInfo } = item;
+                            const imageCell = shippingInfo.trackingImageUrl
+                                ? `<img src="${shippingInfo.trackingImageUrl}" alt="物流單號圖片" style="max-width: 100px;">`
+                                : '無';
+
+                            const row = `
+                                <tr>
+                                    <td>${order.id}</td>
+                                    <td>${shippingInfo.recipient}</td>
+                                    <td>${shippingInfo.address}</td>
+                                    <td>${statusMap[shippingInfo.status]}</td>
+                                    <td>${shippingInfo.trackingNumber}</td>
+                                    <td>${imageCell}</td>
+                                    <td>
+                                        <button class="btn btn-primary btn-sm" onclick="editShippingInfo(${shippingInfo.id})">編輯</button>
+                                    </td>
+                                </tr>`;
+                            shippingTableBody.insertAdjacentHTML("beforeend", row);
+                        });
+                    })
+                    .catch(error => console.error("加載物流信息時出錯:", error));
+            }
+
+            window.searchShippingInfo = () => {
+                const orderId = document.getElementById("orderIdInput").value.trim();
+                const status = document.getElementById("statusSelect").value;
+
+                let query = [];
+                if (orderId) query.push(`orderId=${orderId}`);
+                if (status) query.push(`status=${status}`);
+                const queryString = query.length ? `?${query.join("&")}` : "";
+
+                fetch(`/shipping${queryString}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        shippingTableBody.innerHTML = "";
+                        data.forEach(item => {
+                            const { order, shippingInfo } = item;
+                            const imageCell = shippingInfo.trackingImageUrl
+                                ? `<img src="${shippingInfo.trackingImageUrl}" alt="物流單號圖片" style="max-width: 100px;">`
+                                : '無';
+
+                            const row = `
+                                <tr>
+                                    <td>${order.id}</td>
+                                    <td>${shippingInfo.recipient}</td>
+                                    <td>${shippingInfo.address}</td>
+                                    <td>${statusMap[shippingInfo.status]}</td>
+                                    <td>${shippingInfo.trackingNumber}</td>
+                                    <td>${imageCell}</td>
+                                    <td>
+                                        <button class="btn btn-primary btn-sm" onclick="editShippingInfo(${shippingInfo.id})">編輯</button>
+                                    </td>
+                                </tr>`;
+                            shippingTableBody.insertAdjacentHTML("beforeend", row);
+                        });
+                    })
+                    .catch(error => console.error("搜索物流信息時出錯:", error));
+            };
+
+            window.resetSearchForm = () => {
+                // 清空輸入框和選擇框
+                document.getElementById("orderIdInput").value = "";
+                document.getElementById("statusSelect").value = "";
+
+                // 確保數據重新加載
+                loadShippingInfo();
+            };
+
+            window.editShippingInfo = (shippingId) => {
+                fetch(`/shipping/${shippingId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById("modalRecipient").value = data.recipient || "";
+                        document.getElementById("modalAddress").value = data.address || "";
+                        document.getElementById("modalStatus").value = data.status || "";
+                        document.getElementById("modalImageFile").value = "";
+
+                        if (data.trackingImageUrl) {
+                            document.getElementById("modalImagePreview").src = data.trackingImageUrl;
+                            document.getElementById("modalImagePreview").style.display = "block";
+                        } else {
+                            document.getElementById("modalImagePreview").style.display = "none";
+                        }
+
+                        const saveButton = document.getElementById("saveChangesButton");
+                        saveButton.setAttribute("data-shipping-id", shippingId);
+
+                        const modal = new bootstrap.Modal(document.getElementById("shippingInfoModal"));
+                        modal.show();
+                    })
+                    .catch(error => console.error("獲取物流信息時出錯:", error));
+            };
+
+            document.getElementById("shippingInfoForm").addEventListener("submit", function(event) {
+                event.preventDefault();
+                saveShippingChanges();
+            });
+
+            window.saveShippingChanges = () => {
+                const saveButton = document.getElementById("saveChangesButton");
+                const shippingId = saveButton.getAttribute("data-shipping-id");
+
+                const updatedData = {
+                    recipient: document.getElementById("modalRecipient").value,
+                    address: document.getElementById("modalAddress").value,
+                    status: document.getElementById("modalStatus").value,
+                };
+
+                const imageFile = document.getElementById("modalImageFile").files[0];
+
+                const formData = new FormData();
+                formData.append("shippingInfo", new Blob([JSON.stringify(updatedData)], { type: "application/json" }));
+                if (imageFile) {
+                    formData.append("imageFile", imageFile);
+                }
+
+                fetch(`/shipping/${shippingId}`, {
+                    method: "PUT",
+                    body: formData,
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            alert("物流信息已更新");
+                            const modal = bootstrap.Modal.getInstance(document.getElementById("shippingInfoModal"));
+                            modal.hide();
+                            loadShippingInfo();
+                        } else {
+                            response.text().then(text => alert("更新失敗：" + text));
+                        }
+                    })
+                    .catch(error => console.error("更新物流信息時出錯:", error));
+            };
+
+            // 加入 URL 參數處理，實現與訂單管理的串聯
+            const urlParams = new URLSearchParams(window.location.search);
+            const orderIdParam = urlParams.get('orderId');
+            if (orderIdParam) {
+                document.getElementById("orderIdInput").value = orderIdParam;
+                searchShippingInfo();
+            } else {
+                loadShippingInfo();
+            }
+        });
+    </script>
+    <!-- 引入 Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
